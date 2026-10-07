@@ -16,3 +16,6 @@ Thumbs.db
 
 # 验证截图与测试产物
 _qa/
+
+# Vercel 本地配置（含项目 ID 与环境变量，勿提交）
+.vercel/
