@@ -13,3 +13,6 @@ npm-debug.log*
 # 临时文件
 *.tmp
 Thumbs.db
+
+# 验证截图与测试产物
+_qa/
