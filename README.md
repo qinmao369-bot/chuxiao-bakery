@@ -74,16 +74,33 @@ python3 -m http.server 8080
 | 环境 | 地址 |
 | --- | --- |
 | Production | https://bakery-site-sigma-seven.vercel.app |
+| Production（Git 集成） | https://bakery-site-git-main-luo-fei-yu.vercel.app |
 | GitHub | https://github.com/qinmao369-bot/chuxiao-bakery |
 
 站点为纯静态，无需构建。`vercel.json` 中 `buildCommand` 设为 `null`，直接以仓库根目录作为静态输出。
 
-### 本地 CLI 部署
+### 自动部署已启用
+
+GitHub 仓库 `qinmao369-bot/chuxiao-bakery` 已连接至 Vercel 项目（`bakery-site`）。工作流：
+
+```bash
+git add .
+git commit -m "描述本次改动"
+git push origin main        # Vercel 约 30–60 秒内自动构建并更新正式域名
+```
+
+推送到 `main` 分支即自动部署到生产环境，**无需手动执行任何 Vercel 命令**。分支预览部署同样生效，合并前可先开 PR 看预览效果。
+
+> 注意：Vercel 后台的 Deployment Protection 默认为开启状态，此时外部访客访问 `vercel.app` 会被登录墙拦截。如需对外公开访问，请在项目 Settings → Deployment Protection 中关闭。
+
+### 本地 CLI 部署（备用）
+
+日常开发用上面的自动部署即可。仅在需要手动触发时才用 CLI：
 
 ```bash
 npm i -g vercel          # 若未安装
 vercel login             # 设备授权，浏览器确认即可
-vercel deploy --prod     # 生产部署
+vercel deploy --prod     # 手动生产部署
 ```
 
 `.vercel/` 目录含项目 ID 与环境变量，已在 `.gitignore` 中排除，请勿提交。
