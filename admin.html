@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>商品管理后台 · 初麦 CHUXIAO BAKERY</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+<header class="ah">
+  <div class="ah__in">
+    <a class="ah__brand" href="index.html">
+      <span class="ah__logo">初麦</span>
+      <span class="ah__crumb">商品管理后台</span>
+    </a>
+    <div class="ah__right">
+      <span class="ah__store" id="usageInfo">存储占用 —</span>
+      <a class="ah__site" href="index.html" target="_blank">查看前台 ↗</a>
+    </div>
+  </div>
+  <div class="ah__bar">
+    <div class="ah__bar-in">
+      <label class="ah__search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <input type="text" id="search" placeholder="搜索名称、标签…">
+      </label>
+      <div class="ah__acts">
+        <button class="btn btn--sm" id="addBtn">＋ 新增面包</button>
+        <button class="btn btn--sm" id="exportBtn">导出 JSON</button>
+        <button class="btn btn--sm" id="importBtn">导入 JSON</button>
+        <input type="file" id="importFile" accept="application/json,.json" hidden>
+        <button class="btn btn--sm btn--danger" id="resetBtn">恢复出厂</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="notice" id="notice">
+    <strong>数据存在哪里？</strong>
+    本后台的修改保存在<strong>你当前浏览器的本地存储</strong>（localStorage）里，不会上传到服务器。
+    换一台电脑、换一个浏览器打开，后台看到的是默认数据 —— 需要跨设备同步请用「导出 / 导入 JSON」。
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="list" id="list"></div>
+
+  <div class="empty" id="empty" hidden>
+    <svg viewBox="0 0 160 160"><g fill="none" stroke="#C68B44" stroke-width="3.4"><path d="M40 66h80l-8 56H48l-8-56Z"/><path d="M58 66c0-18 10-30 22-30s22 12 22 30"/><path d="M56 88h48M54 104h52"/></g></svg>
+    <p>没有匹配的商品</p>
+  </div>
+</main>
+
+<!-- 抽屉：编辑单个商品 -->
+<div class="mask" id="mask"></div>
+<aside class="drawer" id="drawer">
+  <div class="drawer__head">
+    <h3 id="dTitle">编辑商品</h3>
+    <button class="x" id="dClose" aria-label="关闭">×</button>
+  </div>
+  <div class="drawer__body">
+
+    <div class="fig">
+      <div class="fig__preview" id="figPreview"></div>
+      <div class="fig__side">
+        <label class="up">
+          <input type="file" id="imgFile" accept="image/*" hidden>
+          <span class="up__btn">上传图片</span>
+        </label>
+        <button class="btn btn--sm btn--block" id="imgClear" hidden>移除图片</button>
+        <p class="fig__hint" id="imgHint">未上传图片时使用下方选中的插画。</p>
+        <label class="fld fld--tight">
+          <span>无图占位插画</span>
+          <select id="fArt"></select>
+        </label>
+        <div class="fig__prev" id="artPrev"></div>
+      </div>
+    </div>
+
+    <label class="fld">
+      <span>名称 <i>*</i></span>
+      <input type="text" id="fName" maxlength="30" placeholder="例：鲁邦乡村大列">
+      <em class="fld__msg" data-for="name"></em>
+    </label>
+
+    <div class="grid2">
+      <label class="fld">
+        <span>价格（元）<i>*</i></span>
+        <input type="number" id="fPrice" min="0" step="0.01" placeholder="42">
+        <em class="fld__msg" data-for="price"></em>
+      </label>
+      <label class="fld">
+        <span>重量 / 规格</span>
+        <input type="text" id="fWt" maxlength="20" placeholder="480g">
+        <em class="fld__msg" data-for="wt"></em>
+      </label>
+    </div>
+
+    <label class="fld">
+      <span>介绍</span>
+      <textarea id="fDesc" rows="4" maxlength="200" placeholder="一句话说清它的来历与口感"></textarea>
+      <em class="fld__counter" id="descCount">0 / 200</em>
+    </label>
+
+    <div class="grid2">
+      <label class="fld">
+        <span>分类</span>
+        <select id="fCat"></select>
+      </label>
+      <label class="fld">
+        <span>角标</span>
+        <input type="text" id="fTag" maxlength="8" placeholder="招牌 / 限量 / 新品">
+      </label>
+    </div>
+
+    <label class="fld">
+      <span>搜索关键词</span>
+      <input type="text" id="fTags" maxlength="120" placeholder="空格分隔，如：大列 乡村 麦香">
+      <em class="fld__hint">影响前台搜索命中，留空则只能用名称搜到</em>
+    </label>
+
+    <div class="switches">
+      <label class="sw">
+        <input type="checkbox" id="fHot">
+        <span class="sw__box"></span>
+        <span class="sw__label">标为招牌<em>前台显示为强调色角标</em></span>
+      </label>
+      <label class="sw">
+        <input type="checkbox" id="fSold">
+        <span class="sw__box"></span>
+        <span class="sw__label">今日售罄<em>前台置灰并禁用加购</em></span>
+      </label>
+    </div>
+
+  </div>
+  <div class="drawer__foot">
+    <button class="btn btn--danger btn--sm" id="dDelete">删除</button>
+    <div class="drawer__foot-r">
+      <button class="btn" id="dCancel">取消</button>
+      <button class="btn btn--primary" id="dSave">保存</button>
+    </div>
+  </div>
+</aside>
+
+<div class="toast" id="toast"></div>
+
+<!-- 确认对话框 -->
+<div class="mask" id="confirmMask">
+  <div class="confirm">
+    <h3 id="cfTitle">确认操作</h3>
+    <p id="cfText">确定吗？</p>
+    <div class="confirm__btns">
+      <button class="btn" id="cfNo">取消</button>
+      <button class="btn btn--primary" id="cfYes">确定</button>
+    </div>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>
