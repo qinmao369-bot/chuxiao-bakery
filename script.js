@@ -110,9 +110,7 @@
   render(curCat);
 
   /* 供外部（如后台同页预览）调用 */
-  function reload() { refreshItems(); buildFilters(); render(curCat); renderCart(); }
-
-  $('#filters').addEventListener('click', function (e) {
+  function reload() { refreshItems(); buildFilters(); render(curCat); renderCart(); }  $('#filters').addEventListener('click', function (e) {
     var b = e.target.closest('.chip');
     if (!b) return;
     $$('#filters .chip').forEach(function (c) { c.classList.remove('is-active'); });
@@ -320,4 +318,11 @@
 
   /* 供外部调用：后台改动后或标签页同步时刷新视图 */
   window.ChuxiaoShop = { reload: reload, render: render };
+
+  /* 后台在另一个标签页保存后，自动同步，无需手动刷新 */
+  window.addEventListener('storage', function (e) {
+    if (e.key !== D.STORE_KEY) return;
+    reload();
+    toast('商品已更新');
+  });
 })();
