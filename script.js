@@ -4,7 +4,7 @@
 
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
-  var FREE_SHIP = 88;
+  var FREE_SHIP = 66;
 
   /* ---------- SVG 面包插画库 ---------- */
   var ART = {
