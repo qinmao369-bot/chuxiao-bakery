@@ -1,0 +1,15 @@
+# macOS
+.DS_Store
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+
+# 日志
+*.log
+npm-debug.log*
+
+# 临时文件
+*.tmp
+Thumbs.db

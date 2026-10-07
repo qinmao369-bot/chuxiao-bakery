@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>初麦 CHUXIAO BAKERY · 天然酵种冷发酵面包</title>
+<meta name="description" content="初麦面包坊 —— 36 小时冷发酵天然酵种面包，每日 06:30 现烤出炉，不添加人造香精与防腐剂。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥖</text></svg>">
+</head>
+<body>
+
+<div class="announce" id="announce">
+  <span class="announce__dot"></span>
+  今日 06:30 全线出炉 · 全场满 88 元免配送
+  <button class="announce__close" aria-label="关闭公告">×</button>
+</div>
+
+<header class="nav" id="nav">
+  <div class="nav__inner">
+    <a class="logo" href="#top">
+      <svg class="logo__mark" viewBox="0 0 40 40" aria-hidden="true">
+        <path d="M6 26c0-8 6-14 14-14s14 6 14 14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M20 12v14M12 18c2 4 2 6 2 8M28 18c-2 4-2 6-2 8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" opacity=".55"/>
+        <circle cx="20" cy="30" r="2.5" fill="currentColor"/>
+      </svg>
+      <span class="logo__text">初麦<em>CHUXIAO</em></span>
+    </a>
+
+    <nav class="nav__links" id="navLinks">
+      <a href="#products">面包</a>
+      <a href="#craft">工艺</a>
+      <a href="#story">故事</a>
+      <a href="#store">门店</a>
+      <a href="#subscribe">订阅</a>
+    </nav>
+
+    <div class="nav__actions">
+      <button class="icon-btn" id="searchBtn" aria-label="搜索">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      </button>
+      <button class="icon-btn icon-btn--cart" id="cartBtn" aria-label="购物袋">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l-1 12H7L6 8Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>
+        <span class="badge" id="cartCount">0</span>
+      </button>
+      <button class="burger" id="burger" aria-label="菜单"><i></i><i></i><i></i></button>
+    </div>
+  </div>
+</header>
+
+<!-- 搜索面板 -->
+<div class="search-panel" id="searchPanel">
+  <div class="search-panel__box">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+    <input type="text" id="searchInput" placeholder="搜面包、可颂、贝果…" autocomplete="off">
+    <span class="search-panel__hint">ESC 关闭</span>
+  </div>
+  <div class="search-panel__results" id="searchResults"></div>
+</div>
+
+<main id="top">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero__grain"></div>
+    <div class="hero__inner">
+      <div class="hero__copy">
+        <p class="eyebrow reveal">36 小时冷发酵 · 天然酵种</p>
+        <h1 class="hero__title reveal">
+          让面包<br>
+          <em>回到它本来的样子</em>
+        </h1>
+        <p class="hero__lead reveal">
+          只用面粉、水、鲁邦种和一点耐心。我们不赶时间，所以面包有时间长出风味。
+        </p>
+        <div class="hero__cta reveal">
+          <a href="#products" class="btn btn--primary">今日出炉</a>
+          <a href="#craft" class="btn btn--ghost">看看我们怎么做</a>
+        </div>
+        <ul class="hero__stats reveal">
+          <li><strong>36</strong><span>小时低温发酵</span></li>
+          <li><strong>5</strong><span>种天然酵种</span></li>
+          <li><strong>0</strong><span>人造防腐剂</span></li>
+        </ul>
+      </div>
+
+      <div class="hero__visual reveal">
+        <div class="hero__card">
+          <svg viewBox="0 0 320 320" class="art art--hero" role="img" aria-label="手工面包插画">
+            <defs>
+              <linearGradient id="crust" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#E7A857"/><stop offset="1" stop-color="#B4682C"/>
+              </linearGradient>
+              <linearGradient id="crumb" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#FBF1DF"/><stop offset="1" stop-color="#EBD8B8"/>
+              </linearGradient>
+            </defs>
+            <circle cx="160" cy="160" r="150" fill="#F6EEE1"/>
+            <circle cx="160" cy="160" r="150" fill="none" stroke="#E2D2B8" stroke-width="2" stroke-dasharray="3 9"/>
+            <!-- 蒸汽 -->
+            <g stroke="#C9AE86" stroke-width="4" stroke-linecap="round" fill="none" opacity=".65">
+              <path d="M118 96c-12-12 8-18-2-32"/>
+              <path d="M160 84c-12-14 10-20 0-36"/>
+              <path d="M202 96c-12-12 8-18-2-32"/>
+            </g>
+            <!-- 面包主体 -->
+            <path d="M52 196c0-46 48-84 108-84s108 38 108 84c0 22-48 38-108 38s-108-16-108-38Z" fill="url(#crust)"/>
+            <path d="M52 196c0-46 48-84 108-84s108 38 108 84c0 10 8 16 8 16H44s8-6 8-16Z" fill="url(#crumb)" opacity=".25"/>
+            <!-- 割包刀痕 -->
+            <g stroke="#8A4A1B" stroke-width="9" stroke-linecap="round" fill="none" opacity=".8">
+              <path d="M104 168c6-12 20-20 34-22"/>
+              <path d="M152 148c8-14 24-24 40-27"/>
+              <path d="M204 158c8-10 20-16 30-18"/>
+            </g>
+            <ellipse cx="160" cy="234" rx="116" ry="16" fill="#8A4A1B" opacity=".12"/>
+          </svg>
+        </div>
+        <div class="hero__badge hero__badge--1">
+          <span class="hero__badge-time">06:30</span>
+          <span class="hero__badge-label">每日出炉</span>
+        </div>
+        <div class="hero__badge hero__badge--2">
+          <span class="hero__badge-label">本周剩</span>
+          <span class="hero__badge-time">23 <small>款</small></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 滚动条 -->
+  <div class="marquee" aria-hidden="true">
+    <div class="marquee__track">
+      <span>天然鲁邦种</span><i>✦</i><span>18℃ 冷发酵</span><i>✦</i><span>石磨全麦粉</span><i>✦</i><span>不添加人造香精</span><i>✦</i><span>当日现烤</span><i>✦</i><span>可降解包装</span><i>✦</i>
+      <span>天然鲁邦种</span><i>✦</i><span>18℃ 冷发酵</span><i>✦</i><span>石磨全麦粉</span><i>✦</i><span>不添加人造香精</span><i>✦</i><span>当日现烤</span><i>✦</i><span>可降解包装</span><i>✦</i>
+    </div>
+  </div>
+
+  <!-- 产品 -->
+  <section class="section" id="products">
+    <div class="section__head reveal">
+      <div>
+        <p class="eyebrow">今日出炉</p>
+        <h2 class="section__title">面包与点心</h2>
+      </div>
+      <p class="section__note">每日 06:30 / 11:30 / 16:30 三炉，卖完即止。<br>可预留，锁定你的那一份。</p>
+    </div>
+
+    <div class="filters reveal" id="filters">
+      <button class="chip is-active" data-cat="all">全部</button>
+      <button class="chip" data-cat="bread">欧包</button>
+      <button class="chip" data-cat="sweet">甜点</button>
+      <button class="chip" data-cat="savory">咸味</button>
+      <button class="chip" data-cat="drink">饮品</button>
+    </div>
+
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <!-- 工艺 -->
+  <section class="section section--dark" id="craft">
+    <div class="section__head reveal">
+      <div>
+        <p class="eyebrow eyebrow--light">Why sourdough</p>
+        <h2 class="section__title">慢，是唯一的风味捷径</h2>
+      </div>
+    </div>
+    <ol class="steps">
+      <li class="step reveal">
+        <span class="step__no">01</span>
+        <h3>养种</h3>
+        <p>每天两次喂养鲁邦种，室温 26℃、湿度 75%，让它保持活跃。超过 12 小时不喂，它就会开始告诉你答案。</p>
+      </li>
+      <li class="step reveal">
+        <span class="step__no">02</span>
+        <h3>折叠 · 静置</h3>
+        <p>面团 4 次折叠构建筋膜，随后 18℃ 冷藏发酵 36 小时。低温让乳酸菌慢慢工作，风味在时间里堆积。</p>
+      </li>
+      <li class="step reveal">
+        <span class="step__no">03</span>
+        <h3>整形 · 割包</h3>
+        <p>手工整形，保留发酵留下的气孔。表面一道割痕，让它在炉里按自己的方式"裂开"。</p>
+      </li>
+      <li class="step reveal">
+        <span class="step__no">04</span>
+        <h3>石板烤制</h3>
+        <p>230℃ 蒸汽注入 8 秒，锁住水分。外壳脆、内里湿润，冷却 2 小时后才可食用——这是我们最难守的规矩。</p>
+      </li>
+    </ol>
+  </section>
+
+  <!-- 故事 -->
+  <section class="section story" id="story">
+    <div class="story__grid">
+      <div class="story__art reveal">
+        <svg viewBox="0 0 400 300" class="art" role="img" aria-label="烘焙工坊插画">
+          <rect width="400" height="300" rx="18" fill="#F1E4CE"/>
+          <rect x="40" y="70" width="150" height="120" rx="10" fill="#C9AE86" opacity=".5"/>
+          <path d="M40 96h150M40 132h150M40 168h150" stroke="#B4976E" stroke-width="3" stroke-linecap="round" opacity=".7"/>
+          <ellipse cx="90" cy="86" rx="22" ry="12" fill="#B4682C"/>
+          <ellipse cx="140" cy="86" rx="22" ry="12" fill="#D2914A"/>
+          <ellipse cx="90" cy="122" rx="22" ry="12" fill="#D2914A"/>
+          <ellipse cx="140" cy="158" rx="22" ry="12" fill="#B4682C"/>
+          <!-- 烤箱 -->
+          <rect x="230" y="80" width="130" height="120" rx="12" fill="#3A2E22"/>
+          <rect x="244" y="98" width="102" height="56" rx="8" fill="#E5A24B" opacity=".9"/>
+          <rect x="244" y="98" width="102" height="56" rx="8" fill="none" stroke="#F6D9A5" stroke-width="3"/>
+          <circle cx="295" cy="180" r="12" fill="#7A6248"/>
+          <circle cx="295" cy="180" r="5" fill="#E5A24B"/>
+          <!-- 操作台 -->
+          <rect x="30" y="210" width="340" height="16" rx="6" fill="#8A6A46"/>
+          <ellipse cx="270" cy="202" rx="52" ry="12" fill="#D2914A"/>
+          <g stroke="#8A4A1B" stroke-width="5" stroke-linecap="round" fill="none">
+            <path d="M244 196c5-8 16-13 26-14"/>
+            <path d="M278 188c6-10 18-16 30-18"/>
+          </g>
+          <!-- 面粉 -->
+          <path d="M70 210c0-22 10-34 24-34s24 12 24 34Z" fill="#F6E9D2" stroke="#D8C3A0" stroke-width="3"/>
+          <circle cx="160" cy="196" r="7" fill="#B4682C"/>
+        </svg>
+      </div>
+      <div class="story__copy reveal">
+        <p class="eyebrow">Our story</p>
+        <h2 class="section__title">从一台家用烤箱开始</h2>
+        <p>
+          2016 年冬天，我们在自家厨房用一台 800 块的烤箱烤出了第一炉面包。
+          那批面包外皮太厚、孔洞不均，但咬下去的那一刻——面粉和麦香在嘴里散开——我们决定把这件事做久一点。
+        </p>
+        <p>
+          八年过去，初麦换过三次门店，添了六台设备，唯一没变的是那只酵种。
+          它现在已经是第十二代了，比我们任何一位员工都待得久。
+        </p>
+        <p>
+          我们也做过机器量产：一次出三百只，外形一模一样，切开却是同一份寡淡。
+          那天之后，我们把产线停了，回到手工台上，一天只做三炉。
+        </p>
+        <div class="story__sign">
+          <span class="story__sign-name">周 · 主理人</span>
+          <span class="story__sign-role">第 12 代酵种看护人</span>
+        </div>
+        <div class="story__metrics">
+          <div><strong>2016</strong><span>第一炉出炉</span></div>
+          <div><strong>12 代</strong><span>鲁邦种血统</span></div>
+          <div><strong>3</strong><span>家门店 · 海南</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 门店 -->
+  <section class="section section--tint" id="store">
+    <div class="section__head reveal">
+      <div>
+        <p class="eyebrow">Visit us</p>
+        <h2 class="section__title">三家门店</h2>
+      </div>
+      <p class="section__note">堂食座位有限，建议先电话预留。<br>每日 07:00 – 20:00（周一休）</p>
+    </div>
+    <div class="stores">
+      <article class="store reveal">
+        <div class="store__flag">旗舰店</div>
+        <h3>初麦 · 国兴店</h3>
+        <p>海口市美兰区国兴大道 12 号<br>近海航国际广场</p>
+        <ul><li>☎ 0898-6661 2305</li><li>🕘 07:00 – 20:00</li></ul>
+        <button class="btn btn--outline js-reserve" data-store="国兴店">预留面包</button>
+      </article>
+      <article class="store reveal">
+        <div class="store__flag">咖啡</div>
+        <h3>初麦 · 友谊店</h3>
+        <p>海口市龙华区友谊路 55 号<br>带院区，可坐户外</p>
+        <ul><li>☎ 0898-6620 1188</li><li>☕ 手冲 / 冷萃</li></ul>
+        <button class="btn btn--outline js-reserve" data-store="友谊店">预留面包</button>
+      </article>
+      <article class="store reveal">
+        <div class="store__flag">烘焙工坊</div>
+        <h3>初麦 · 三亚湾店</h3>
+        <p>三亚市吉阳区海棠路 8 号<br>面向海湾，配停车场</p>
+        <ul><li>☎ 0898-8888 0016</li><li>🎓 每周日烘焙课</li></ul>
+        <button class="btn btn--outline js-reserve" data-store="三亚湾店">预留面包</button>
+      </article>
+    </div>
+  </section>
+
+  <!-- 订阅 -->
+  <section class="section subscribe" id="subscribe">
+    <div class="subscribe__inner reveal">
+      <div class="subscribe__copy">
+        <p class="eyebrow">Subscribe</p>
+        <h2 class="section__title">每周五，你的面包就到家</h2>
+        <p>订阅周新鲜出炉的 5 只面包组合（¥128/周），周五下午送达。支持随时暂停，不满意可退。</p>
+      </div>
+      <form class="subscribe__form" id="subscribeForm" novalidate>
+        <div class="field">
+          <input type="text" id="phone" placeholder="手机号" inputmode="numeric" maxlength="11">
+          <span class="field__hint" data-hint="phone">用于接收取货通知</span>
+        </div>
+        <button class="btn btn--primary btn--block" type="submit">订阅周新鲜面包</button>
+        <p class="subscribe__fine">提交即表示同意我们仅将该号码用于配送通知，可随时退订。</p>
+      </form>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="footer__top">
+    <div class="footer__brand">
+      <span class="logo__text">初麦<em>CHUXIAO</em></span>
+      <p>天然酵种 · 冷发酵 · 每日现烤</p>
+    </div>
+    <div class="footer__cols">
+      <div><h4>逛逛</h4><a href="#products">今日面包</a><a href="#craft">我们的工艺</a><a href="#subscribe">订阅服务</a></div>
+      <div><h4>门店</h4><a href="#store">国兴店</a><a href="#store">友谊店</a><a href="#store">三亚湾店</a></div>
+      <div><h4>关于</h4><a href="#story">品牌故事</a><a href="#store">联系与合作</a><a href="#subscribe">批发配送</a></div>
+    </div>
+  </div>
+  <div class="footer__bottom">
+    <span>© 2026 初麦面包坊 · 海南海口</span>
+    <span>面包需要耐心 · 做人也是</span>
+  </div>
+</footer>
+
+<!-- 购物袋抽屉 -->
+<div class="drawer-mask" id="drawerMask"></div>
+<aside class="drawer" id="drawer">
+  <div class="drawer__head">
+    <h3>购物袋 <span id="drawerCount">(0)</span></h3>
+    <button class="icon-btn" id="drawerClose" aria-label="关闭">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <div class="drawer__body" id="drawerBody"></div>
+  <div class="drawer__foot">
+    <div class="drawer__total"><span>合计</span><strong id="drawerTotal">¥0</strong></div>
+    <p class="drawer__ship" id="shipNote">再买 ¥88 可免配送</p>
+    <div class="drawer__bar"><i id="shipBar"></i></div>
+    <button class="btn btn--primary btn--block" id="checkout">去结算</button>
+  </div>
+</aside>
+
+<div class="toast" id="toast"></div>
+<div class="reserve-mask" id="reserveMask">
+  <div class="reserve" role="dialog" aria-modal="true">
+    <button class="reserve__close" id="reserveClose" aria-label="关闭">×</button>
+    <h3 id="reserveTitle">预留面包</h3>
+    <p class="reserve__desc">留下手机号，我们出炉后第一时间通知你来取。</p>
+    <input type="tel" id="reservePhone" placeholder="手机号" inputmode="numeric" maxlength="11">
+    <button class="btn btn--primary btn--block" id="reserveSubmit">确认预留</button>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
