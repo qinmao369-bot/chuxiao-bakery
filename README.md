@@ -67,6 +67,27 @@ python3 -m http.server 8080
 
 字体：中文思源宋体（Noto Serif SC）+ 西文 Cormorant Garamond，均通过 Google Fonts 引入，并带系统衬线字体降级。
 
+## 线上部署
+
+已部署至 Vercel：
+
+| 环境 | 地址 |
+| --- | --- |
+| Production | https://bakery-site-sigma-seven.vercel.app |
+| GitHub | https://github.com/qinmao369-bot/chuxiao-bakery |
+
+站点为纯静态，无需构建。`vercel.json` 中 `buildCommand` 设为 `null`，直接以仓库根目录作为静态输出。
+
+### 本地 CLI 部署
+
+```bash
+npm i -g vercel          # 若未安装
+vercel login             # 设备授权，浏览器确认即可
+vercel deploy --prod     # 生产部署
+```
+
+`.vercel/` 目录含项目 ID 与环境变量，已在 `.gitignore` 中排除，请勿提交。
+
 ## 关于站内数据
 
 站内品牌（初麦）、门店地址、电话号码及商品信息均为**虚构示例内容**，仅用于界面演示，不对应任何真实商户。上线前请替换为实际信息。
