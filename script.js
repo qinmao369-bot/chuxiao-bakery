@@ -325,4 +325,20 @@
     reload();
     toast('商品已更新');
   });
+
+  /* ---------- 启动时从数据库拉取商品 ----------
+   * 策略：先用本地镜像/内置数据渲染首屏（不白屏），
+   * 数据库返回后再整体刷新一次。
+   * 拉失败不打断访客 —— 只在控制台留痕，页面照常可看。 */
+  function bootFromDatabase() {
+    if (!D.isConfigured || !D.isConfigured()) return;
+    D.sync().then(function () {
+      reload();
+      document.documentElement.setAttribute('data-source', 'database');
+    }).catch(function (e) {
+      document.documentElement.setAttribute('data-source', 'fallback');
+      console.warn('[初麦] 数据库同步失败，已回退展示：', (e && e.message) || e);
+    });
+  }
+  bootFromDatabase();
 })();

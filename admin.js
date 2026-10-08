@@ -99,8 +99,123 @@
       return false;
     }
     updateUsage();
+    pushRemote();
     return true;
   }
+
+  /* ---------- 数据库状态徽标 ---------- */
+  function setDbBadge(state, text) {
+    var el = $('#dbBadge');
+    if (!el) return;
+    el.classList.remove('is-ok', 'is-err', 'is-sync');
+    if (state) el.classList.add('is-' + state);
+    el.textContent = text;
+  }
+
+  function dbState() {
+    if (!D.isConfigured()) {
+      setDbBadge(null, '未连数据库');
+      return;
+    }
+    setDbBadge('ok', '数据库已连接');
+  }
+
+  /* 把内存数据整体写回数据库。失败不回滚内存——
+   * 本地仍留着改动，界面上明确报错，让你知道没存上去。 */
+  function pushRemote() {
+    if (!D.isConfigured()) { dbState(); return; }
+    setDbBadge('sync', '同步中…');
+    D.push().then(function () {
+      setDbBadge('ok', '已存到数据库');
+    }).catch(function (e) {
+      setDbBadge('err', '保存失败');
+      toast('数据库保存失败：' + ((e && e.message) || '未知错误'));
+    });
+  }
+
+  /* ---------- 数据库配置弹窗 ---------- */
+  function openDb() {
+    var c = D.getConfig();
+    var g = window.ChuxiaoDBConfig || {};
+    var url = g.url || (c && c.url) || '';
+    $('#dbAddr').textContent = url || 'config.js 里还没填 url';
+    $('#dbAddrHint').textContent = url
+      ? ''
+      : '先在 config.js 里填入 Supabase 的 url 与 anon key，再回来填令牌。';
+    $('#dbToken').value = (c && c.token) || '';
+    setDbMsg('', '');
+    $('#dbMask').classList.add('is-on');
+  }
+  function closeDb() { $('#dbMask').classList.remove('is-on'); }
+
+  function setDbMsg(text, kind) {
+    var el = $('#dbMsg');
+    el.textContent = text || '';
+    el.className = 'dbmsg' + (kind ? ' is-' + kind : '');
+  }
+
+  /* url / key 来自 config.js，这里只提交令牌 */
+  function readDbForm() {
+    return { url: '', key: '', token: $('#dbToken').value.trim() };
+  }
+
+  $('#dbBadge').addEventListener('click', openDb);
+  $('#dbMask').addEventListener('click', function (e) {
+    if (e.target.id === 'dbMask') closeDb();
+  });
+
+  /* 测试连接：先临时写入令牌，成功才算数 */
+  $('#dbTest').addEventListener('click', function () {
+    var v = readDbForm();
+    if (!D.isConfigured()) {
+      setDbMsg('config.js 里的 url 或 anon key 还是空的。', 'err');
+      return;
+    }
+    setDbMsg('正在连接…', '');
+    D.setConfig(v);
+    D.test().then(function () {
+      setDbMsg('连接成功，数据库能读。再点「保存并同步」把商品拉下来。', 'ok');
+    }).catch(function (e) {
+      setDbMsg('连接失败：' + ((e && e.message) || '未知错误'), 'err');
+    });
+  });
+
+  $('#dbSave').addEventListener('click', function () {
+    var v = readDbForm();
+    if (!D.isConfigured()) {
+      setDbMsg('config.js 里的 url 或 anon key 还是空的。', 'err');
+      return;
+    }
+    var r = D.setConfig(v);
+    if (!r.ok) { setDbMsg(r.message, 'err'); return; }
+    setDbMsg('正在从数据库拉取商品…', '');
+    setDbBadge('sync', '同步中…');
+    D.sync().then(function (list) {
+      items = list;
+      render();
+      updateUsage();
+      dbState();
+      setDbMsg('已连接，读到 ' + items.length + ' 款商品。之后的修改会直接写进数据库。', 'ok');
+      toast('已连接数据库，读到 ' + items.length + ' 款商品');
+      setTimeout(closeDb, 900);
+    }).catch(function (e) {
+      setDbBadge('err', '连接失败');
+      setDbMsg('拉取失败：' + ((e && e.message) || '未知错误'), 'err');
+    });
+  });
+
+  $('#dbClear').addEventListener('click', function () {
+    confirmBox('清除管理令牌',
+      '将删除本机保存的令牌，之后无法再修改数据库（仍可正常查看）。数据库里已存的商品不受影响。'
+    ).then(function (ok) {
+      if (!ok) return;
+      D.clearConfig();
+      $('#dbToken').value = '';
+      dbState();
+      setDbMsg('令牌已清除。', 'ok');
+      toast('已清除管理令牌');
+    });
+  });
   function updateUsage() {
     var n = items.length;
     var withImg = items.filter(function (i) { return i.img; }).length;
@@ -396,13 +511,32 @@
 
   /* ---------- 恢复出厂 ---------- */
   $('#resetBtn').addEventListener('click', function () {
+    var hasDb = D.isConfigured();
     confirmBox('恢复出厂设置',
-      '将丢弃全部本地修改，恢复到内置的 8 款默认商品。此操作不可撤销。'
+      '将丢弃全部修改，恢复到内置的 8 款默认商品。' +
+      (hasDb ? '数据库里的商品也会被覆盖。' : '') +
+      '此操作不可撤销。'
     ).then(function (ok) {
       if (!ok) return;
-      items = D.reset();
-      render();
-      toast('已恢复默认商品');
+      if (!hasDb) {
+        items = D.reset();
+        render();
+        toast('已恢复默认商品');
+        return;
+      }
+      setDbBadge('sync', '同步中…');
+      D.resetRemote().then(function (list) {
+        items = list;
+        render();
+        updateUsage();
+        dbState();
+        toast('已恢复默认商品，数据库同步覆盖');
+      }).catch(function (e) {
+        items = D.reset();
+        render();
+        setDbBadge('err', '恢复失败');
+        toast('数据库写入失败：' + ((e && e.message) || '未知错误'));
+      });
     });
   });
 
@@ -418,8 +552,27 @@
   fillArtSelect();
   fillCatSelect();
   render();
+  dbState();
 
-  if (localStorage.getItem(D.STORE_KEY)) {
-    setTimeout(function () { toast('已读取本地保存的商品数据'); }, 400);
-  }
+  /* 已配过数据库就自动拉取，否则沿用本地/内置数据 */
+  (function boot() {
+    if (!D.isConfigured()) {
+      if (localStorage.getItem(D.STORE_KEY)) {
+        setTimeout(function () { toast('已读取本机保存的商品数据（未连数据库）'); }, 400);
+      }
+      return;
+    }
+    setDbBadge('sync', '同步中…');
+    D.sync().then(function (list) {
+      items = list;
+      render();
+      updateUsage();
+      dbState();
+      toast('已从数据库读到 ' + items.length + ' 款商品');
+    }).catch(function (e) {
+      setDbBadge('err', '连接失败');
+      console.warn('[初麦后台] 数据库同步失败：', (e && e.message) || e);
+      toast('数据库读取失败，当前显示本机数据');
+    });
+  })();
 })();

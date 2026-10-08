@@ -17,6 +17,7 @@
       <span class="ah__crumb">商品管理后台</span>
     </a>
     <div class="ah__right">
+      <button class="dbbadge" id="dbBadge" type="button">数据库 —</button>
       <span class="ah__store" id="usageInfo">存储占用 —</span>
       <a class="ah__site" href="index.html" target="_blank">查看前台 ↗</a>
     </div>
@@ -41,8 +42,9 @@
 <main class="wrap">
   <div class="notice" id="notice">
     <strong>数据存在哪里？</strong>
-    本后台的修改保存在<strong>你当前浏览器的本地存储</strong>（localStorage）里，不会上传到服务器。
-    换一台电脑、换一个浏览器打开，后台看到的是默认数据 —— 需要跨设备同步请用「导出 / 导入 JSON」。
+    <span id="noticeText">尚未连接数据库。点右上角「数据库」按钮填入 Supabase 地址与密钥，
+    之后所有修改会直接写进数据库，前台任意设备打开都能看到。
+    未连接时，改动只存在当前浏览器，换设备看不到。</span>
   </div>
 
   <div class="stats" id="stats"></div>
@@ -148,6 +150,38 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- 弹窗：数据库连接配置 -->
+<div class="mask" id="dbMask">
+  <div class="confirm confirm--wide">
+    <h3>连接 Supabase 数据库</h3>
+    <p class="db__desc">
+      数据库地址与 anon key 写在 <b>config.js</b> 里（公开无害，安全性由数据库权限策略保证）。
+      这里只填<b>管理令牌</b> —— 它决定谁能改数据，只保存在这台浏览器，不进仓库。
+    </p>
+
+    <div class="dbform">
+      <div class="dbaddr">
+        <span>当前数据库</span>
+        <code id="dbAddr">—</code>
+        <em class="fld__hint" id="dbAddrHint"></em>
+      </div>
+      <label class="fld">
+        <span>管理令牌（x-admin-token）</span>
+        <input type="text" id="dbToken" placeholder="建库 SQL 里你自己填的那个随机串" spellcheck="false" autocomplete="off">
+        <em class="fld__hint">与 supabase/schema.sql 第 4.2 节里的值必须完全一致，否则写操作会被数据库拒绝</em>
+      </label>
+      <p class="dbmsg" id="dbMsg"></p>
+    </div>
+
+    <div class="confirm__btns">
+      <button class="btn" id="dbClear">清除令牌</button>
+      <span class="confirm__spacer"></span>
+      <button class="btn" id="dbTest">测试连接</button>
+      <button class="btn btn--primary" id="dbSave">保存并同步</button>
+    </div>
+  </div>
+</div>
+
 <!-- 确认对话框 -->
 <div class="mask" id="confirmMask">
   <div class="confirm">
@@ -160,6 +194,7 @@
   </div>
 </div>
 
+<script src="config.js"></script>
 <script src="data.js"></script>
 <script src="admin.js"></script>
 </body>

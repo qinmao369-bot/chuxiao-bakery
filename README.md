@@ -47,13 +47,17 @@ python3 -m http.server 8080
 
 ```
 .
-├── index.html    # 前台页面结构与静态内容
-├── admin.html    # 商品管理后台
-├── styles.css    # 前台设计系统（配色、组件、响应式断点）
-├── admin.css     # 后台设计系统
-├── data.js       # 数据层：商品数据 + SVG 插画库（前后台共用）
-├── script.js     # 前台交互逻辑
-├── admin.js      # 后台交互逻辑
+├── index.html      # 前台页面结构与静态内容
+├── admin.html      # 商品管理后台
+├── config.js       # 数据库地址与 anon key（公开，需自己填）
+├── data.js         # 数据层：商品读写 + SVG 插画库（前后台共用）
+├── script.js       # 前台交互逻辑
+├── admin.js        # 后台交互逻辑
+├── styles.css      # 前台设计系统（配色、组件、响应式断点）
+├── admin.css       # 后台设计系统
+├── supabase/
+│   └── schema.sql  # 建表 + 约束 + 索引 + 权限策略 + 初始数据
+├── vercel.json
 ├── README.md
 └── LICENSE
 ```
@@ -79,13 +83,66 @@ python3 -m http.server 8080
 
 ### 数据存储说明
 
-修改保存在**浏览器 localStorage**，不上传服务器。因此：
+数据源优先级：**Supabase 数据库 > 本地镜像 > 内置示例数据**。
 
-- 同一浏览器同一站点可正常读写，前台即时生效
-- **换设备、换浏览器会看到默认数据** —— 用「导出 / 导入 JSON」迁移
-- 图片上传时自动压缩至最长边 720px 的 JPEG（质量 0.82），实测 1582KB 原图压到约 11KB
-- 顶栏实时显示存储占用，超过 3.2MB 会提示接近上限（localStorage 上限约 5MB）
-- 打开多个后台标签页时，一处修改会**自动同步**到其他标签页
+配置好数据库后，所有商品读写都走数据库，前台任意设备打开都一致。未配置时自动降级为内置示例数据，站点不会白屏。
+
+#### 接入 Supabase（三步）
+
+**1. 建库**
+
+到 [supabase.com](https://supabase.com) 注册建项目，然后打开 **SQL Editor**，把
+[`supabase/schema.sql`](supabase/schema.sql) 整段粘进去执行。
+
+脚本会建好表、约束、索引、权限策略，并导入 8 款初始商品。
+
+**2. 改一处占位符**
+
+`schema.sql` 第 4.2 节里有两处 `YOUR_ADMIN_TOKEN_HERE`，换成你自己生成的随机串：
+
+```bash
+openssl rand -hex 16
+```
+
+**3. 填连接信息**
+
+编辑 [`config.js`](config.js)，填入 Project URL 和 anon public key
+（Supabase 后台 → Project Settings → Data API）。
+
+然后打开后台 `/admin.html`，点右上角「数据库」按钮，填入**第 2 步那个管理令牌**，保存。
+
+前台会自动开始从数据库读商品。
+
+#### 为什么 anon key 可以公开
+
+Supabase 的 anon key 本来就是设计给前端用的，官方教程也直接写在前端代码里。
+**它的安全性不靠保密，靠数据库侧的 RLS 策略**：
+
+| 操作 | 权限 |
+| --- | --- |
+| 读商品 | 所有人可读（访客要能看到商品） |
+| 增删改 | 必须携带 `x-admin-token` 请求头且值匹配 |
+
+管理令牌只保存在**你自己浏览器的 localStorage**，不进代码、不进仓库。
+
+> 反过来说：如果 anon key 只存在你本地（不写进 `config.js`），访客的前台读不到数据库，
+> 只能看到内置示例数据 —— 你改的东西别人看不见。所以 url 和 key 必须公开。
+
+#### 图片字段
+
+`img` 字段现在接受三种形式：
+
+- `https://...` 图片 URL —— **推荐**，配合 Supabase Storage 使用
+- `/path/to/img.jpg` 站内相对路径
+- `data:image/...` base64 —— 旧的本地上传方式，仍兼容
+
+留空则回退为手绘 SVG 插画。
+
+#### 未连接数据库时
+
+- 后台仍可编辑，改动只存在当前浏览器
+- 徽标显示「未连数据库」
+- 前台展示内置的 8 款示例数据
 
 ## 设计系统
 

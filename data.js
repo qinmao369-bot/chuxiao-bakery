@@ -73,6 +73,22 @@
     return v;
   }
 
+  /* 图片字段规范化：
+   * 1) data:image/...  —— 旧的本地上传（base64），保留兼容
+   * 2) http(s)://...   —— 接数据库后的主流形态，图片存在对象存储/CDN
+   * 3) / 开头的站内相对路径
+   * 其余一律视为无图，前端回退 SVG 插画。
+   * 注意不做 javascript: 等伪协议放行，避免 <img src="javascript:..."> 注入。 */
+  function normImg(v) {
+    if (typeof v !== 'string') return '';
+    v = v.trim();
+    if (!v) return '';
+    if (v.indexOf('data:image/') === 0) return v;
+    if (/^https?:\/\//i.test(v)) return v;
+    if (v.charAt(0) === '/' && v.indexOf('//') !== 0) return v;
+    return '';
+  }
+
   /* 单条商品规范化：补齐缺失字段、丢弃非法值 */
   function normalizeItem(raw) {
     if (!raw || typeof raw !== 'object') return null;
@@ -89,7 +105,7 @@
       art: FIELDS.art.options.indexOf(raw.art) > -1 ? raw.art : FIELDS.art.def,
       hot: !!raw.hot,
       soldOut: !!raw.soldOut,
-      img: (typeof raw.img === 'string' && raw.img.indexOf('data:image/') === 0) ? raw.img : ''
+      img: normImg(raw.img)
     };
     var p = Number(raw.price);
     if (isFinite(p) && p >= 0) {
@@ -111,50 +127,259 @@
     return out;
   }
 
-  /* ---------- 存储 ---------- */
+  /* ============================================================
+   * 存储层
+   *
+   * 数据源优先级：Supabase 数据库 > 本地镜像 > 内置默认
+   *
+   * - 数据库是唯一权威数据源，后台保存即写库
+   * - 本地镜像（localStorage）仅作断网/未配置时的兜底展示，
+   *   每次成功同步后被覆盖，不算独立数据源
+   * - 内置默认（DEFAULTS）保证仓库 clone 下来就能跑，不会白屏
+   * ============================================================ */
+  var CFG_KEY = 'chuxiao_db_cfg_v1';
+  var cache = null;      // 内存缓存：本次页面会话内的数据源
+  var lastError = null;  // 最近一次远程操作错误
+
   function defaults() {
     return DEFAULTS.map(function (o) { return normalizeItem(o); });
   }
 
-  function load() {
+  /* ---------- 连接配置 ----------
+   *
+   * url / key：公开的，写在 config.js 里随代码发布。
+   *   访客的前台页面必须能拿到它，否则读不到数据库。
+   *   安全性由数据库 RLS 保证，不靠保密。
+   *
+   * token：管理令牌，只存在管理者自己的浏览器 localStorage，
+   *   不进代码、不进仓库。决定谁能改数据。
+   *
+   * 取值优先级：localStorage 覆盖 config.js（方便临时调试/换库）。 */
+  function getConfig() {
+    var c = { url: '', key: '', token: '' };
+    var g = (typeof global.ChuxiaoDBConfig === 'object' && global.ChuxiaoDBConfig) || null;
+    if (g) {
+      c.url = String(g.url || '');
+      c.key = String(g.key || '');
+    }
     try {
-      var raw = localStorage.getItem(STORE_KEY);
-      if (!raw) return defaults();
-      var list = normalizeList(JSON.parse(raw));
-      return (list && list.length) ? list : defaults();
+      var raw = localStorage.getItem(CFG_KEY);
+      if (raw) {
+        var s = JSON.parse(raw);
+        if (s && typeof s === 'object') {
+          if (s.url) c.url = String(s.url);
+          if (s.key) c.key = String(s.key);
+          if (s.token) c.token = String(s.token);
+        }
+      }
+    } catch (e) {}
+
+    if (!c.url || !c.key) return null;
+    return { url: c.url.replace(/\/+$/, ''), key: c.key, token: c.token };
+  }
+
+  /* 保存管理令牌（url/key 以 config.js 为准，这里只存 token 与可选的覆盖值） */
+  function setConfig(cfg) {
+    cfg = cfg || {};
+    try {
+      localStorage.setItem(CFG_KEY, JSON.stringify({
+        url: String(cfg.url || ''),
+        key: String(cfg.key || ''),
+        token: String(cfg.token || '')
+      }));
+      return { ok: true };
     } catch (e) {
-      return defaults();
+      return { ok: false, message: '配置保存失败：' + ((e && e.message) || '未知错误') };
     }
   }
 
-  function save(items) {
-    try {
-      localStorage.setItem(STORE_KEY, JSON.stringify(items));
-      return { ok: true };
-    } catch (e) {
-      var quota = (e && (e.name === 'QuotaExceededError' || e.code === 22)) ||
-                  /quota|exceed/i.test((e && e.message) || '');
-      return {
-        ok: false,
-        quota: !!quota,
-        message: quota
-          ? '本地存储空间已满。多为图片占用，请删除部分商品图片或改用更小的图片。'
-          : '保存失败：' + ((e && e.message) || '未知错误')
-      };
+  function clearConfig() {
+    try { localStorage.removeItem(CFG_KEY); } catch (e) {}
+  }
+
+  function isConfigured() { return !!getConfig(); }
+
+  /* ---------- 行 ↔ 商品 字段映射 ----------
+   * 数据库列名 description / sold_out，前端用 desc / soldOut。 */
+  function rowToItem(r) {
+    return normalizeItem({
+      id: r.id, name: r.name, price: r.price, wt: r.wt,
+      desc: r.description, tag: r.tag, tags: r.tags,
+      cat: r.cat, art: r.art, hot: r.hot, soldOut: r.sold_out,
+      img: r.img
+    });
+  }
+
+  function itemToRow(it, i) {
+    return {
+      id: it.id,
+      name: it.name,
+      price: it.price,
+      wt: it.wt,
+      description: it.desc,
+      tag: it.tag,
+      tags: it.tags,
+      cat: it.cat,
+      art: it.art,
+      hot: !!it.hot,
+      sold_out: !!it.soldOut,
+      img: it.img || '',
+      sort: i,
+      updated_at: new Date().toISOString()
+    };
+  }
+
+  /* ---------- PostgREST 请求封装 ----------
+   * 直接走 Supabase 的 REST 接口，不引 SDK，保持零依赖。 */
+  function req(path, opt) {
+    var c = getConfig();
+    if (!c) return Promise.reject(new Error('尚未配置数据库连接'));
+    opt = opt || {};
+    var headers = {
+      'apikey': c.key,
+      'Authorization': 'Bearer ' + c.key,
+      'Content-Type': 'application/json'
+    };
+    if (c.token) headers['x-admin-token'] = c.token;
+    if (opt.prefer) headers['Prefer'] = opt.prefer;
+
+    var init = { method: opt.method || 'GET', headers: headers };
+    if (opt.body !== undefined) init.body = JSON.stringify(opt.body);
+
+    return fetch(c.url + '/rest/v1/' + path, init).then(function (res) {
+      if (res.ok) {
+        if (res.status === 204) return null;
+        return res.text().then(function (t) {
+          if (!t) return null;
+          try { return JSON.parse(t); } catch (e) { return null; }
+        });
+      }
+      return res.text().then(function (t) {
+        var msg = t;
+        try {
+          var j = JSON.parse(t);
+          msg = j.message || j.hint || j.details || t;
+        } catch (e) {}
+        if (res.status === 401 || res.status === 403) {
+          throw new Error('（' + res.status + '）数据库拒绝了这次操作：' + msg +
+            '。若为写入被拒，检查后台填写的管理令牌是否与建库 SQL 里的一致。');
+        }
+        throw new Error('（' + res.status + '）' + msg);
+      });
+    });
+  }
+
+  /* ---------- 同步 ---------- */
+
+  /* 从数据库拉取，覆盖内存缓存并刷新本地镜像 */
+  function sync() {
+    if (!isConfigured()) {
+      lastError = '尚未配置数据库连接，当前展示内置示例数据';
+      return Promise.reject(new Error(lastError));
     }
+    return req('items?select=*&order=sort.asc').then(function (rows) {
+      if (!Array.isArray(rows)) throw new Error('数据库返回格式异常（期望数组）');
+      cache = rows.map(rowToItem).filter(Boolean);
+      lastError = null;
+      mirror(cache);
+      return cache;
+    }).catch(function (e) {
+      lastError = (e && e.message) || String(e);
+      throw e;
+    });
+  }
+
+  /* 把内存缓存整体写回数据库：
+   * 先 upsert 现有商品，再删除库里有、本地已没有的。 */
+  function push() {
+    if (!isConfigured()) {
+      lastError = '尚未配置数据库连接，改动只存在本地';
+      return Promise.reject(new Error(lastError));
+    }
+    var list = (cache || load()).slice();
+    var rows = list.map(itemToRow);
+
+    return req('items', {
+      method: 'POST',
+      prefer: 'resolution=merge-duplicates,return=minimal',
+      body: rows
+    }).then(function () {
+      // 删除本次不存在的 id
+      var keep = rows.map(function (r) { return r.id; });
+      if (!keep.length) {
+        return req('items?id=neq.' + encodeURIComponent('__none__'), {
+          method: 'DELETE', prefer: 'return=minimal'
+        });
+      }
+      return req('items?id=not.in.(' + keep.map(encodeURIComponent).join(',') + ')', {
+        method: 'DELETE', prefer: 'return=minimal'
+      });
+    }).then(function () {
+      lastError = null;
+      mirror(list);
+      return { ok: true };
+    }).catch(function (e) {
+      lastError = (e && e.message) || String(e);
+      throw e;
+    });
+  }
+
+  /* 连通性自检：只读一条，用来在后台验证配置对不对 */
+  function test() {
+    if (!isConfigured()) return Promise.reject(new Error('尚未配置数据库连接'));
+    return req('items?select=id&limit=1').then(function () { return { ok: true }; });
+  }
+
+  /* ---------- 本地镜像（兜底，非数据源）---------- */
+  function mirror(list) {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(list)); } catch (e) {}
+  }
+
+  function load() {
+    if (cache) return cache;
+    try {
+      var raw = localStorage.getItem(STORE_KEY);
+      if (raw) {
+        var list = normalizeList(JSON.parse(raw));
+        if (list && list.length) { cache = list; return cache; }
+      }
+    } catch (e) {}
+    cache = defaults();
+    return cache;
+  }
+
+  /* 同步更新内存缓存（编辑后立即生效，随后由 push() 落库） */
+  function save(items) {
+    var list = normalizeList(items);
+    if (!list) return { ok: false, message: '数据格式不正确' };
+    cache = list;
+    mirror(list);
+    return { ok: true };
   }
 
   function reset() {
     try { localStorage.removeItem(STORE_KEY); } catch (e) {}
-    return defaults();
+    cache = defaults();
+    return cache;
   }
 
-  /* 存储占用估算（字节） */
+  /* 恢复出厂：把内置默认写回数据库 */
+  function resetRemote() {
+    cache = defaults();
+    return push().then(function () { return cache; });
+  }
+
+  /* 存储占用估算（字节）—— 本地镜像体积，供后台显示 */
   function usage() {
     try {
       var raw = localStorage.getItem(STORE_KEY) || '';
       return new Blob([raw]).size;
     } catch (e) { return 0; }
+  }
+
+  function source() {
+    if (lastError) return 'fallback';
+    return isConfigured() ? 'remote' : 'default';
   }
 
   global.ChuxiaoData = {
@@ -164,11 +389,23 @@
     DEFAULTS: DEFAULTS,
     FIELDS: FIELDS,
     STORE_KEY: STORE_KEY,
+    CFG_KEY: CFG_KEY,
     load: load,
     save: save,
     reset: reset,
+    resetRemote: resetRemote,
     usage: usage,
     normalizeItem: normalizeItem,
-    normalizeList: normalizeList
+    normalizeList: normalizeList,
+    // 数据库相关
+    getConfig: getConfig,
+    setConfig: setConfig,
+    clearConfig: clearConfig,
+    isConfigured: isConfigured,
+    sync: sync,
+    push: push,
+    test: test,
+    source: source,
+    lastError: function () { return lastError; }
   };
 })(window);
